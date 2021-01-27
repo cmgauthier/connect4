@@ -67,8 +67,16 @@ export default class App extends Component {
   addMove = (x, y) => {
     const { playerTurn } = this.state;
     const nextPlayerTurn = playerTurn === 'red' ? 'yellow' : 'red';
-    //check for a win, based on this next move
-    this.setState({ moves: this.state.moves.concat({ x, y, player: playerTurn }), playerTurn: nextPlayerTurn }, () => this.checkForWin(x , y, playerTurn));
+    let availableYPosition = null;
+    for (let position = this.state.rows - 1; position >= 0; position--) {
+      if (!this.getPiece(x, position)) {
+        availableYPosition = position;
+        break;
+      }
+    }
+    if (availableYPosition !== null) {
+      this.setState({ moves: this.state.moves.concat({ x, y: availableYPosition, player: playerTurn }), playerTurn: nextPlayerTurn }, () => this.checkForWin(x , availableYPosition));
+    }
   }
 
   renderBoard() {
