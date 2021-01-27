@@ -22,7 +22,11 @@ export default class App extends Component {
     return list[0];
   }
 
-
+  addMove = (x, y) => {
+    const { playerTurn } = this.state;
+    const nexPlayerTurn = playerTurn === 'red' ? 'yellow' : 'red';
+    this.setState({ moves: this.state.moves.concat({ x, y, player: playerTurn }), playerTurn: nexPlayerTurn });
+  }
 
   renderBoard() {
     const { rows, columns } = this.state;
