@@ -12,7 +12,7 @@ export default class App extends Component {
   };
 
   resetBoard = () => {
-    this.setState({ moves: [] });
+    this.setState({ moves: [], winner: null });
   }
 
   getPiece = (x, y) => {
@@ -22,19 +22,62 @@ export default class App extends Component {
     return list[0];
   }
 
+  getWinningMovesForVelocity = (xPosition, yPosition, xVelocity, yVelocity) => {
+    const winningMoves = [{ x: xPosition, y: yPosition}];
+    const player = this.getPiece(xPosition, yPosition).player;
+
+    for (let delta = 1; delta <= 3; delta++) {
+      const checkX = xPosition + xVelocity * delta;
+      const checkY = yPosition + yVelocity * delta;
+
+      const checkPiece = this.getPiece(checkX, checkY);
+      if (checkPiece && checkPiece.player === player) {
+        winningMoves.push({ x: checkX, y: checkY });
+      } else {
+        break;
+      }
+    }
+
+    for (let delta = -1; delta >= -3; delta--) {
+      const checkX = xPosition + xVelocity * delta;
+      const checkY = yPosition + yVelocity * delta;
+
+      const checkPiece = this.getPiece(checkX, checkY);
+      if (checkPiece && checkPiece.player === player) {
+        winningMoves.push({ x: checkX, y: checkY });
+      } else {
+        break;
+      }
+    }
+
+    return winningMoves;
+  }
+
+  checkForWin = (x , y) => {
+    const velocities = [{ x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 1 }, { x: 1, y: 1 }];
+    for (let dex = 0; dex < velocities.length; dex++) {
+      const element = velocities[dex];
+      const winningMoves = this.getWinningMovesForVelocity(x, y, element.x, element.y);
+      if (winningMoves.length > 3) {
+        this.setState({ winner: this.getPiece(x, y).player, winningMoves });
+      }
+    }
+  }
+
   addMove = (x, y) => {
     const { playerTurn } = this.state;
-    const nexPlayerTurn = playerTurn === 'red' ? 'yellow' : 'red';
-    this.setState({ moves: this.state.moves.concat({ x, y, player: playerTurn }), playerTurn: nexPlayerTurn });
+    const nextPlayerTurn = playerTurn === 'red' ? 'yellow' : 'red';
+    //check for a win, based on this next move
+    this.setState({ moves: this.state.moves.concat({ x, y, player: playerTurn }), playerTurn: nextPlayerTurn }, () => this.checkForWin(x , y, playerTurn));
   }
 
   renderBoard() {
-    const { rows, columns } = this.state;
+    const { rows, columns, winner } = this.state;
     const rowViews = [];
 
-    for (let row = 0; row < this.state.rows; row++) {
+    for (let row = 0; row < rows; row++) {
       const columnViews = [];
-      for (let column = 0; column < this.state.columns; column++) {
+      for (let column = 0; column < columns; column++) {
         const piece = this.getPiece(column, row);
         columnViews.push(
           <div onClick={() => {this.addMove(column, row)}} style={{ backgroundColor: '#00a8ff', width: '8vw', height: '8vw', display: 'flex', padding: 5 , cursor: 'pointer' }}>
@@ -50,6 +93,7 @@ export default class App extends Component {
     }
     return (
       <div style={{backgroundColor: 'red', display: 'flex', flexDirection: 'column' }}>
+        {winner && <div onClick={this.resetBoard} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: 0, zIndex: 3, backgroundColor: 'rgba(0, 0, 0, .5)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#fff', fontWeight: '200', fontSize: '8vw' }}>{`${winner} WINS!!`}</div>}
         {rowViews}
       </div>
     )
@@ -62,6 +106,7 @@ export default class App extends Component {
     return (
       <div style={style ? Object.assign({}, styles.container, style) : styles.container}>
         <div>
+
           {this.renderBoard()}
         </div>
       </div>
